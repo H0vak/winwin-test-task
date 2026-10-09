@@ -1,0 +1,52 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: winwin_db
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d winwin_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - app-net
+
+  data-api:
+    build: ./data-api
+    environment:
+      INTERNAL_TOKEN: ${INTERNAL_TOKEN:-dev-internal-token}
+    ports:
+      - "8081:8081"
+    networks:
+      - app-net
+
+  auth-api:
+    build: ./auth-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+      data-api:
+        condition: service_started
+    environment:
+      POSTGRES_URL: jdbc:postgresql://postgres:5432/winwin_db
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      JWT_SECRET: ${JWT_SECRET:-dev-only-secret-change-me-dev-only-secret-change-me}
+      INTERNAL_TOKEN: ${INTERNAL_TOKEN:-dev-internal-token}
+      DATA_API_URL: http://data-api:8081/api/transform
+    ports:
+      - "8080:8080"
+    networks:
+      - app-net
+
+networks:
+  app-net:
+
+volumes:
+  pgdata:
