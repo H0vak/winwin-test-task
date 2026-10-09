@@ -9,9 +9,9 @@ Two small Spring Boot apps that run together via `docker compose`:
 - **postgres**: stores `users` and `processing_log`.
 
 ```
-client ──► auth-api (8080) ──► data-api (8081)
+client ---► auth-api (8080) ---► data-api (8081)
                │
-               └──► postgres (5432)
+               └---► postgres (5432)
 ```
 
 ## Requirements
